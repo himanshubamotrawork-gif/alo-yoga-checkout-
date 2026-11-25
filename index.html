@@ -531,6 +531,22 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.25);
       z-index: 60;
     }
+ 
+    /* Price display and promo code */
+    .item-price { display:flex; align-items:baseline; gap:6px; white-space:nowrap; }
+    .price-original { font-size:14px; font-weight:500; color:var(--black); }
+    .price-original.is-discounted { text-decoration:line-through; color:#999; font-size:12px; }
+    .price-discounted { color:#d32f2f; font-weight:600; font-size:14px; }
+    .discount-summary-row { color:#d32f2f; }
+    .promo-code-section { margin-bottom:22px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+    .promo-code-section h4 { margin-bottom:12px; }
+    .promo-code-form { display:flex; gap:8px; }
+    .promo-code-form input { min-width:0; flex:1; height:44px; padding:0 12px; border:1px solid #bdbdbd; border-radius:0; font:inherit; font-size:13px; }
+    .promo-code-form button { min-width:84px; padding:0 16px; border:1px solid #000; background:#000; color:#fff; font:inherit; font-size:12px; font-weight:600; letter-spacing:.6px; text-transform:uppercase; cursor:pointer; }
+    .promo-feedback { min-height:16px; margin-top:8px; color:#26733b; font-size:12px; }
+    .promo-feedback:empty { display:none; }
+    [hidden] { display:none !important; }
+
   </style>
 </head>
 <body>
@@ -584,7 +600,7 @@
       <button class="remove-btn">×</button>
       <div class="item-top">
         <div class="item-name">ALO Softsculpt 7/8 Define Legging</div>
-        <div class="item-price" style="display:flex; align-items:baseline; gap:6px;"><span style="text-decoration:line-through; color:#999; font-size:12px;">$134</span><span style="color:#d32f2f; font-weight:600;">$43.50</span></div>
+        <div class="item-price" data-original-price="134"><span class="price-original">$134.00</span><span class="price-discounted" hidden></span></div>
       </div>
       <div class="item-meta">Color: Navy</div>
       <div class="item-meta">Size: M</div>
@@ -607,7 +623,7 @@
       <button class="remove-btn">×</button>
       <div class="item-top">
         <div class="item-name">Sherpa Avenue Full Zip Jacket</div>
-        <div class="item-price" style="display:flex; align-items:baseline; gap:6px;"><span style="text-decoration:line-through; color:#999; font-size:12px;">$218</span><span style="color:#d32f2f; font-weight:600;">$64.50</span></div>
+        <div class="item-price" data-original-price="218"><span class="price-original">$218.00</span><span class="price-discounted" hidden></span></div>
       </div>
       <div class="item-meta">Color: Deep Gravel</div>
       <div class="item-meta">Size: M</div>
@@ -629,7 +645,7 @@
       <button class="remove-btn">×</button>
       <div class="item-top">
         <div class="item-name">Sherpa Edge Bomber</div>
-        <div class="item-price" style="display:flex; align-items:baseline; gap:6px;"><span style="text-decoration:line-through; color:#999; font-size:12px;">$228</span><span style="color:#d32f2f; font-weight:600;">$70.00</span></div>
+        <div class="item-price" data-original-price="228"><span class="price-original">$228.00</span><span class="price-discounted" hidden></span></div>
       </div>
       <div class="item-meta">Color: Black</div>
       <div class="item-meta">Size: M</div>
@@ -646,10 +662,11 @@
   <div class="checkout-section">
     <div class="subtotal-row">
       <span>Subtotal</span>
-      <span style="color: #d32f2f; font-weight: 600;">$178.00</span>
+      <strong id="sticky-subtotal">$580.00</strong>
     </div>
-    <div style="font-size: 12px; color: #666; margin-bottom: 12px; text-align: right;">
-      Original: <span style="text-decoration: line-through;">$580</span> · You save $402.00
+    <div class="subtotal-row discount-summary-row" id="sticky-discount-row" hidden>
+      <span>Discount applied (90%)</span>
+      <strong id="sticky-discount">−$0.00</strong>
     </div>
     <button class="checkout-btn">Checkout</button>
   </div>
@@ -667,6 +684,14 @@
 
   <!-- Order Summary box -->
   <div class="order-summary-box">
+    <div class="promo-code-section">
+      <h4>Promo Code</h4>
+      <form id="promo-form" class="promo-code-form">
+        <input id="promo-code-input" type="text" placeholder="Enter promo code" aria-label="Promo code" autocomplete="off">
+        <button type="submit" id="promo-apply">Apply</button>
+      </form>
+      <p id="promo-feedback" class="promo-feedback" role="status" aria-live="polite"></p>
+    </div>
     <label class="gift-message">
       <input type="checkbox">
       Add a Gift Message
@@ -674,15 +699,15 @@
     <h4>Order Summary</h4>
     <div class="summary-line">
       <span>Original Subtotal:</span>
-      <span style="text-decoration: line-through; color: #999;">$580</span>
+      <span id="original-subtotal">$580.00</span>
     </div>
-    <div class="summary-line" style="color: #d32f2f;">
-      <span>Discount</span>
-      <span>-$402.00</span>
+    <div class="summary-line discount-summary-row" id="discount-summary-row" hidden>
+      <span>Discount applied (90%)</span>
+      <span id="discount-amount">−$0.00</span>
     </div>
     <div class="summary-line" style="font-weight: 600;">
       <span>Subtotal:</span>
-      <span>$178.00</span>
+      <span id="final-subtotal">$580.00</span>
     </div>
     <div class="summary-line free">
       <span>Shipping:</span>
@@ -719,6 +744,66 @@
 
 
 </div>
+
+
+<script>
+(() => {
+  const itemPriceNodes = Array.from(document.querySelectorAll('.item-price[data-original-price]'));
+  const originalSubtotal = itemPriceNodes.reduce((sum, node) => sum + Number(node.dataset.originalPrice || 0), 0);
+  const money = value => '
+</html>
+ + value.toFixed(2);
+  let promoApplied = false;
+
+  function updatePrices() {
+    const discount = promoApplied ? originalSubtotal * 0.90 : 0;
+    const finalTotal = originalSubtotal - discount;
+
+    itemPriceNodes.forEach(node => {
+      const original = Number(node.dataset.originalPrice || 0);
+      const originalNode = node.querySelector('.price-original');
+      const discountedNode = node.querySelector('.price-discounted');
+      originalNode.textContent = money(original);
+      originalNode.classList.toggle('is-discounted', promoApplied);
+      discountedNode.hidden = !promoApplied;
+      discountedNode.textContent = money(original * 0.10);
+    });
+
+    document.getElementById('original-subtotal').textContent = money(originalSubtotal);
+    document.getElementById('final-subtotal').textContent = money(finalTotal);
+    document.getElementById('sticky-subtotal').textContent = money(finalTotal);
+
+    const discountText = '−' + money(discount);
+    document.getElementById('discount-amount').textContent = discountText;
+    document.getElementById('sticky-discount').textContent = discountText;
+    document.getElementById('discount-summary-row').hidden = !promoApplied;
+    document.getElementById('sticky-discount-row').hidden = !promoApplied;
+
+    const bagCount = document.querySelector('.bag-header span');
+    if (bagCount) bagCount.textContent = itemPriceNodes.length + (itemPriceNodes.length === 1 ? ' ITEM' : ' ITEMS');
+  }
+
+  document.getElementById('promo-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const input = document.getElementById('promo-code-input');
+    const code = input.value.trim();
+    const feedback = document.getElementById('promo-feedback');
+
+    if (!code) {
+      promoApplied = false;
+      feedback.textContent = 'Enter a promo code to apply the discount.';
+      feedback.style.color = '#b42318';
+    } else {
+      promoApplied = true;
+      feedback.textContent = 'Promo code applied — 90% discount.';
+      feedback.style.color = '#26733b';
+    }
+    updatePrices();
+  });
+
+  updatePrices();
+})();
+</script>
 
 </body>
 </html>
