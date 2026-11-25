@@ -547,6 +547,146 @@
     .promo-feedback:empty { display:none; }
     [hidden] { display:none !important; }
 
+  
+    /* Mobile order confirmation screen */
+    .confirmation-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      overflow-y: auto;
+      background: #fff;
+      color: #111;
+      max-width: 430px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 22px 28px 42px;
+      text-align: center;
+      -webkit-overflow-scrolling: touch;
+    }
+    .confirmation-screen.is-visible { display: block; }
+    .confirmation-logo {
+      display: block;
+      margin: 18px auto 52px;
+      font-size: 42px;
+      font-weight: 500;
+      letter-spacing: -4px;
+      line-height: 1;
+    }
+    .confirmation-order-number {
+      font-size: 14px;
+      letter-spacing: .6px;
+      margin-bottom: 42px;
+    }
+    .confirmation-screen h1 {
+      font-size: clamp(25px, 7vw, 34px);
+      line-height: 1.15;
+      font-weight: 500;
+      margin: 0 -8px 24px;
+    }
+    .confirmation-thanks {
+      font-size: 15px;
+      line-height: 1.65;
+      margin-bottom: 36px;
+    }
+    .confirmation-processing {
+      color: #888;
+      font-size: 12px;
+      line-height: 1.7;
+      margin-bottom: 48px;
+    }
+    .confirmation-divider {
+      height: 1px;
+      background: #d9d9d9;
+      border: 0;
+      margin: 0 -12px 34px;
+    }
+    .confirmation-summary {
+      text-align: left;
+      padding: 0 0 24px;
+    }
+    .confirmation-summary h2 {
+      font-size: 20px;
+      font-weight: 500;
+      margin-bottom: 28px;
+    }
+    .confirmation-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 26px;
+      min-width: 0;
+    }
+    .confirmation-item img {
+      width: 76px;
+      height: 96px;
+      object-fit: cover;
+      background: #f3f3f3;
+      flex: 0 0 76px;
+    }
+    .confirmation-item-info { flex: 1; min-width: 0; }
+    .confirmation-item-name {
+      font-size: 13px;
+      line-height: 1.35;
+      margin-bottom: 5px;
+    }
+    .confirmation-item-meta {
+      font-size: 12px;
+      color: #777;
+      line-height: 1.5;
+    }
+    .confirmation-item-price {
+      text-align: right;
+      font-size: 12px;
+      white-space: nowrap;
+      color: #666;
+      min-width: 68px;
+    }
+    .confirmation-item-price s {
+      display: block;
+      color: #888;
+      margin-bottom: 5px;
+    }
+    .confirmation-totals {
+      padding-top: 8px;
+      font-size: 13px;
+      color: #777;
+    }
+    .confirmation-total-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 9px 0;
+    }
+    .confirmation-total-line.grand {
+      color: #111;
+      font-size: 17px;
+      font-weight: 500;
+      margin-top: 16px;
+    }
+    .confirmation-demo-note {
+      margin: 22px 0;
+      color: #888;
+      font-size: 11px;
+      line-height: 1.5;
+      text-align: center;
+    }
+    .confirmation-back {
+      width: 100%;
+      border: 1px solid #111;
+      background: #fff;
+      color: #111;
+      padding: 14px;
+      font: inherit;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    @media (min-width: 431px) {
+      .confirmation-screen { left: 50%; transform: translateX(-50%); border-left: 1px solid #eee; border-right: 1px solid #eee; }
+    }
+
   </style>
 </head>
 <body>
@@ -746,6 +886,29 @@
 </div>
 
 
+
+  <section class="confirmation-screen" id="confirmation-screen" aria-live="polite" aria-label="Order confirmation">
+    <div class="confirmation-logo">alo</div>
+    <p class="confirmation-order-number" id="confirmation-order-number">ORDER #ALO-00000000</p>
+    <h1>WE RECEIVED YOUR ORDER</h1>
+    <p class="confirmation-thanks">Thanks for your order! We'll let you know as soon as your order ships.</p>
+    <p class="confirmation-processing">*During high volume sale periods, please allow extra time for order processing and delivery.</p>
+    <hr class="confirmation-divider">
+    <div class="confirmation-summary">
+      <h2>ORDER SUMMARY</h2>
+      <div id="confirmation-items"></div>
+      <div class="confirmation-totals">
+        <div class="confirmation-total-line"><span>Subtotal</span><span id="confirmation-subtotal">$580.00</span></div>
+        <div class="confirmation-total-line" id="confirmation-discount-row" hidden><span>Discount applied</span><span id="confirmation-discount">−$0.00</span></div>
+        <div class="confirmation-total-line"><span>Shipping</span><span>FREE</span></div>
+        <div class="confirmation-total-line"><span>Taxes</span><span>$0.00</span></div>
+        <div class="confirmation-total-line grand"><span>Total</span><span id="confirmation-total">$580.00</span></div>
+      </div>
+    </div>
+    <p class="confirmation-demo-note">Demo checkout preview — no payment has been processed and no order has been placed.</p>
+    <button class="confirmation-back" id="confirmation-back">Back to shopping bag</button>
+  </section>
+
 <script>
 (() => {
   const itemPriceNodes = Array.from(document.querySelectorAll('.item-price[data-original-price]'));
@@ -797,6 +960,76 @@
       feedback.style.color = '#26733b';
     }
     updatePrices();
+  });
+
+
+  function showOrderConfirmation() {
+    const confirmation = document.getElementById('confirmation-screen');
+    const list = document.getElementById('confirmation-items');
+    list.replaceChildren();
+
+    itemPriceNodes.forEach(node => {
+      const bagItem = node.closest('.bag-item');
+      if (!bagItem) return;
+      const row = document.createElement('div');
+      row.className = 'confirmation-item';
+
+      const sourceImage = bagItem.querySelector('.bag-item-img img');
+      if (sourceImage) {
+        const img = document.createElement('img');
+        img.src = sourceImage.src;
+        img.alt = sourceImage.alt || '';
+        row.appendChild(img);
+      }
+
+      const info = document.createElement('div');
+      info.className = 'confirmation-item-info';
+      const name = document.createElement('div');
+      name.className = 'confirmation-item-name';
+      name.textContent = (bagItem.querySelector('.item-name')?.textContent || 'Item') + ' × ' + (bagItem.querySelector('.qty-value')?.textContent || '1');
+      info.appendChild(name);
+      bagItem.querySelectorAll('.item-meta').forEach(meta => {
+        const line = document.createElement('div');
+        line.className = 'confirmation-item-meta';
+        line.textContent = meta.textContent;
+        info.appendChild(line);
+      });
+      row.appendChild(info);
+
+      const price = document.createElement('div');
+      price.className = 'confirmation-item-price';
+      const original = Number(node.dataset.originalPrice || 0);
+      const qty = Number(bagItem.querySelector('.qty-value')?.textContent || 1);
+      if (promoApplied) {
+        const was = document.createElement('s');
+        was.textContent = money(original * qty);
+        price.appendChild(was);
+      }
+      const now = document.createElement('span');
+      now.textContent = money(original * qty * (promoApplied ? 0.10 : 1));
+      price.appendChild(now);
+      row.appendChild(price);
+      list.appendChild(row);
+    });
+
+    const originalTotal = originalSubtotal;
+    const discount = promoApplied ? originalTotal * 0.90 : 0;
+    const finalTotal = originalTotal - discount;
+    document.getElementById('confirmation-order-number').textContent = 'ORDER #ALO-' + String(Date.now()).slice(-8);
+    document.getElementById('confirmation-subtotal').textContent = money(originalTotal);
+    document.getElementById('confirmation-discount').textContent = '−' + money(discount);
+    document.getElementById('confirmation-discount-row').hidden = !promoApplied;
+    document.getElementById('confirmation-total').textContent = money(finalTotal);
+
+    confirmation.classList.add('is-visible');
+    document.body.style.overflow = 'hidden';
+    confirmation.scrollTop = 0;
+  }
+
+  document.querySelector('.apple-pay')?.addEventListener('click', showOrderConfirmation);
+  document.getElementById('confirmation-back')?.addEventListener('click', () => {
+    document.getElementById('confirmation-screen').classList.remove('is-visible');
+    document.body.style.overflow = '';
   });
 
   updatePrices();
