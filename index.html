@@ -665,7 +665,7 @@
       <strong id="sticky-subtotal">$580.00</strong>
     </div>
     <div class="subtotal-row discount-summary-row" id="sticky-discount-row" hidden>
-      <span>Discount applied (90%)</span>
+      <span>Discount applied</span>
       <strong id="sticky-discount">−$0.00</strong>
     </div>
     <button class="checkout-btn">Checkout</button>
@@ -702,7 +702,7 @@
       <span id="original-subtotal">$580.00</span>
     </div>
     <div class="summary-line discount-summary-row" id="discount-summary-row" hidden>
-      <span>Discount applied (90%)</span>
+      <span>Discount applied</span>
       <span id="discount-amount">−$0.00</span>
     </div>
     <div class="summary-line" style="font-weight: 600;">
@@ -793,7 +793,7 @@
       feedback.style.color = '#b42318';
     } else {
       promoApplied = true;
-      feedback.textContent = 'Promo code applied — 90% discount.';
+      feedback.textContent = 'Promo code applied.';
       feedback.style.color = '#26733b';
     }
     updatePrices();
