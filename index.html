@@ -750,7 +750,7 @@
 (() => {
   const itemPriceNodes = Array.from(document.querySelectorAll('.item-price[data-original-price]'));
   const originalSubtotal = itemPriceNodes.reduce((sum, node) => sum + Number(node.dataset.originalPrice || 0), 0);
-  const money = value => '
+  const money = value => String.fromCharCode(36) + Number(value).toFixed(2);
   let promoApplied = false;
 
   function updatePrices() {
