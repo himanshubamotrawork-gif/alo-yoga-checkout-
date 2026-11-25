@@ -552,19 +552,35 @@
     .confirmation-screen {
       position: fixed;
       inset: 0;
-      z-index: 1000;
+      z-index: 10000;
       display: none;
       overflow-y: auto;
       background: #fff;
       color: #111;
-      max-width: 430px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 22px 28px 42px;
+      width: 100vw;
+      max-width: none;
+      height: 100dvh;
+      margin: 0;
+      padding: 22px 18px 42px;
       text-align: center;
       -webkit-overflow-scrolling: touch;
+      box-sizing: border-box;
     }
     .confirmation-screen.is-visible { display: block; }
+    .confirmation-content { width: 100%; max-width: 430px; margin: 0 auto; }
+    .payment-processing {
+      position: fixed; inset: 0; z-index: 10001; display: none;
+      align-items: center; justify-content: center; flex-direction: column;
+      gap: 18px; background: #fff; color: #111; font-size: 14px;
+      letter-spacing: .3px;
+    }
+    .payment-processing.is-visible { display: flex; }
+    .payment-spinner {
+      width: 34px; height: 34px; border: 3px solid #e6e6e6;
+      border-top-color: #111; border-radius: 50%;
+      animation: payment-spin .8s linear infinite;
+    }
+    @keyframes payment-spin { to { transform: rotate(360deg); } }
     .confirmation-logo {
       display: block;
       margin: 18px auto 52px;
@@ -683,9 +699,7 @@
       text-transform: uppercase;
       cursor: pointer;
     }
-    @media (min-width: 431px) {
-      .confirmation-screen { left: 50%; transform: translateX(-50%); border-left: 1px solid #eee; border-right: 1px solid #eee; }
-    }
+
 
   </style>
 </head>
@@ -888,6 +902,7 @@
 
 
   <section class="confirmation-screen" id="confirmation-screen" aria-live="polite" aria-label="Order confirmation">
+    <div class="confirmation-content">
     <div class="confirmation-logo">alo</div>
     <p class="confirmation-order-number" id="confirmation-order-number">ORDER #ALO-00000000</p>
     <h1>WE RECEIVED YOUR ORDER</h1>
@@ -907,7 +922,9 @@
     </div>
     <p class="confirmation-demo-note">Demo checkout preview — no payment has been processed and no order has been placed.</p>
     <button class="confirmation-back" id="confirmation-back">Back to shopping bag</button>
+    </div>
   </section>
+  <div class="payment-processing" id="payment-processing" aria-live="polite"><div class="payment-spinner"></div><span>Processing your order...</span></div>
 
 <script>
 (() => {
@@ -1026,7 +1043,24 @@
     confirmation.scrollTop = 0;
   }
 
-  document.querySelector('.apple-pay')?.addEventListener('click', showOrderConfirmation);
+  const confirmationLayer = document.getElementById('confirmation-screen');
+  const processingLayer = document.getElementById('payment-processing');
+  document.body.appendChild(confirmationLayer);
+  document.body.appendChild(processingLayer);
+
+  let paymentInProgress = false;
+  document.querySelector('.apple-pay')?.addEventListener('click', event => {
+    event.preventDefault();
+    if (paymentInProgress) return;
+    paymentInProgress = true;
+    processingLayer.classList.add('is-visible');
+    document.body.style.overflow = 'hidden';
+    window.setTimeout(() => {
+      processingLayer.classList.remove('is-visible');
+      showOrderConfirmation();
+      paymentInProgress = false;
+    }, 1500);
+  });
   document.getElementById('confirmation-back')?.addEventListener('click', () => {
     document.getElementById('confirmation-screen').classList.remove('is-visible');
     document.body.style.overflow = '';
@@ -1081,7 +1115,7 @@
       feedback.style.color = '#b42318';
     } else {
       promoApplied = true;
-      feedback.textContent = 'Promo code applied — 90% discount.';
+      feedback.textContent = 'Promo code applied.';
       feedback.style.color = '#26733b';
     }
     updatePrices();
