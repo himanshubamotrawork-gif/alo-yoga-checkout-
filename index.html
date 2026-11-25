@@ -272,7 +272,7 @@
 
     /* Alo Access */
     .alo-access {
-      padding: 28px 16px;
+      padding: 28px 16px 12px;
       border-top: 8px solid var(--light-gray);
     }
 
@@ -289,7 +289,7 @@
 
     .alo-access p {
       font-size: 14px;
-      margin-bottom: 16px;
+      margin-bottom: 8px;
     }
 
     .alo-access a {
@@ -371,7 +371,7 @@
 
     /* Order Summary */
     .order-summary-box {
-      margin: 24px 16px;
+      margin: 12px 16px 24px;
       border: 1px solid var(--border);
       padding: 20px;
     }
@@ -538,8 +538,8 @@
     .price-original.is-discounted { text-decoration:line-through; color:#999; font-size:12px; }
     .price-discounted { color:#d32f2f; font-weight:600; font-size:14px; }
     .discount-summary-row { color:#d32f2f; }
-    .promo-code-section { margin-bottom:22px; padding-bottom:18px; border-bottom:1px solid var(--border); }
-    .promo-code-section h4 { margin-bottom:12px; }
+     .promo-code-section { margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+     .promo-code-section h4 { margin-bottom:10px; }
     .promo-code-form { display:flex; gap:8px; }
     .promo-code-form input { min-width:0; flex:1; height:44px; padding:0 12px; border:1px solid #bdbdbd; border-radius:0; font:inherit; font-size:13px; }
     .promo-code-form button { min-width:84px; padding:0 16px; border:1px solid #000; background:#000; color:#fff; font:inherit; font-size:12px; font-weight:600; letter-spacing:.6px; text-transform:uppercase; cursor:pointer; }
@@ -673,7 +673,7 @@
 
   <!-- Alo Access -->
   <div class="alo-access">
-    <h2>alo<span>access</span></h2>
+    <h2>alo <span>access</span></h2>
     <p>Earn <strong>58 points</strong> & exclusive rewards. <a href="#">Start Now!</a></p>
   </div>
 
@@ -751,8 +751,61 @@
   const itemPriceNodes = Array.from(document.querySelectorAll('.item-price[data-original-price]'));
   const originalSubtotal = itemPriceNodes.reduce((sum, node) => sum + Number(node.dataset.originalPrice || 0), 0);
   const money = value => '
+  let promoApplied = false;
+
+  function updatePrices() {
+    const discount = promoApplied ? originalSubtotal * 0.90 : 0;
+    const finalTotal = originalSubtotal - discount;
+
+    itemPriceNodes.forEach(node => {
+      const original = Number(node.dataset.originalPrice || 0);
+      const originalNode = node.querySelector('.price-original');
+      const discountedNode = node.querySelector('.price-discounted');
+      originalNode.textContent = money(original);
+      originalNode.classList.toggle('is-discounted', promoApplied);
+      discountedNode.hidden = !promoApplied;
+      discountedNode.textContent = money(original * 0.10);
+    });
+
+    document.getElementById('original-subtotal').textContent = money(originalSubtotal);
+    document.getElementById('final-subtotal').textContent = money(finalTotal);
+    document.getElementById('sticky-subtotal').textContent = money(finalTotal);
+
+    const discountText = '−' + money(discount);
+    document.getElementById('discount-amount').textContent = discountText;
+    document.getElementById('sticky-discount').textContent = discountText;
+    document.getElementById('discount-summary-row').hidden = !promoApplied;
+    document.getElementById('sticky-discount-row').hidden = !promoApplied;
+
+    const bagCount = document.querySelector('.bag-header span');
+    if (bagCount) bagCount.textContent = itemPriceNodes.length + (itemPriceNodes.length === 1 ? ' ITEM' : ' ITEMS');
+  }
+
+  document.getElementById('promo-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const input = document.getElementById('promo-code-input');
+    const code = input.value.trim();
+    const feedback = document.getElementById('promo-feedback');
+
+    if (!code) {
+      promoApplied = false;
+      feedback.textContent = 'Enter a promo code to apply the discount.';
+      feedback.style.color = '#b42318';
+    } else {
+      promoApplied = true;
+      feedback.textContent = 'Promo code applied — 90% discount.';
+      feedback.style.color = '#26733b';
+    }
+    updatePrices();
+  });
+
+  updatePrices();
+})();
+</script>
+
+</body>
 </html>
- + value.toFixed(2);
+ + Number(value).toFixed(2);
   let promoApplied = false;
 
   function updatePrices() {
